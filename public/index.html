@@ -321,6 +321,8 @@
 
     function computeTimeSeries(data) {
       const { columns, rows } = data;
+      // EXCLUDE "math" columns — those are calculated totals in the spreadsheet
+      // and would cause double-counting if added to individual account sums.
       return rows.map(row => {
         const date = parseDate(row.date);
         const cash = sumCategory(row, columns, 'cash');
@@ -328,10 +330,10 @@
         const joint = sumCategory(row, columns, 'joint');
         const business = sumCategory(row, columns, 'business');
         const debt = sumCategory(row, columns, 'debt');
-        const investments = sumCategory(row, columns, 'math');
-        const totalPositive = cash + assets + joint + business + investments;
+        // Don't include math columns in totals — they're spreadsheet formulas
+        const totalPositive = cash + assets + joint + business;
         const netWorth = totalPositive - Math.abs(debt);
-        return { date, cash, assets, joint, business, debt: Math.abs(debt), investments, netWorth, raw: row };
+        return { date, cash, assets, joint, business, debt: Math.abs(debt), investments: 0, netWorth, raw: row };
       }).filter(r => r.date);
     }
 
@@ -443,6 +445,17 @@
               <div style="overflow-x:auto;">${accountsTable(data, latest)}</div>
             </div>
           </div>
+
+          <!-- Debug: Column Categorization -->
+          <div class="chart-grid">
+            <div class="chart-card full-width" style="border-color:var(--accent);">
+              <h3 style="color:var(--accent);">Column Categorization (Debug)</h3>
+              <p style="color:var(--text-dim);font-size:0.8rem;margin-bottom:1rem;">
+                Review how each column is being categorized. If any are wrong, let me know so I can fix it.
+              </p>
+              <div style="overflow-x:auto;">${debugTable(data)}</div>
+            </div>
+          </div>
         </div>
       `;
 
@@ -492,6 +505,26 @@
 
       return `<table class="accounts-table">
         <thead><tr><th>Account</th><th>Category</th><th style="text-align:right">Balance</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    // ── Debug Table HTML ─────────────────────────────────────────────────
+    function debugTable(data) {
+      const allCols = data.columns;
+      let rows = allCols.map(col => {
+        return `<tr>
+          <td>${col.index}</td>
+          <td>${col.name}</td>
+          <td><span class="cat-badge ${col.category}">${col.category}</span></td>
+          <td style="color:${col.category === 'math' ? 'var(--text-dim)' : 'var(--text)'}">
+            ${col.category === 'math' ? 'EXCLUDED from totals' : 'Included in totals'}
+          </td>
+        </tr>`;
+      }).join('');
+
+      return `<table class="accounts-table">
+        <thead><tr><th>Col #</th><th>Column Name</th><th>Category</th><th>Status</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
     }
