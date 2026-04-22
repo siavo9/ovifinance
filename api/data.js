@@ -26,8 +26,8 @@ function categorizeByColor(bgColor) {
   if (r > 235 && g > 235 && b > 235) return 'other';
   if (g > 150 && g > r + 40 && g > b + 40) return 'cash';
   if (r > 200 && g > 200 && b < 160) return 'assets';
-  if (b > 150 && g > 150 && r < b && r < g) return 'joint';
-  if (r > 100 && b > 100 && g < Math.min(r, b) - 30) return 'business';
+  if (b > 150 && g > 150 && r < b && r < g) return 'cash'; // was joint, now cash
+  if (r > 100 && b > 100 && g < Math.min(r, b) - 30) return 'cash';
   if (r > 180 && r > g + 60 && r > b + 60) return 'debt';
   if (b > 150 && b > r + 40 && b > g + 40) return 'math';
   return 'other';
@@ -67,6 +67,11 @@ module.exports = async function handler(req, res) {
       if (lowerName.startsWith('total') || lowerName.startsWith('sums') ||
           lowerName.startsWith('net worth') || lowerName.startsWith('real net worth')) {
         category = 'math';
+      }
+
+      // Override: Kia debt column should always be debt
+      if (lowerName.includes('kia') && lowerName.includes('debt')) {
+        category = 'debt';
       }
 
       columns.push({ index: i, name, category });

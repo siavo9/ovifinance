@@ -335,13 +335,11 @@
         const date = parseDate(row.date);
         const cash = sumCategory(row, columns, 'cash');
         const assets = sumCategory(row, columns, 'assets');
-        const joint = sumCategory(row, columns, 'joint');
-        const business = sumCategory(row, columns, 'business');
         const debt = sumCategory(row, columns, 'debt');
         // Don't include math columns in totals — they're spreadsheet formulas
-        const totalPositive = cash + assets + joint + business;
+        const totalPositive = cash + assets;
         const netWorth = totalPositive - Math.abs(debt);
-        return { date, cash, assets, joint, business, debt: Math.abs(debt), investments: 0, netWorth, raw: row };
+        return { date, cash, assets, debt: Math.abs(debt), investments: 0, netWorth, raw: row };
       }).filter(r => r.date);
     }
 
@@ -397,7 +395,7 @@
             ${summaryCard('Net Worth', latest.netWorth, prev.netWorth, 'net')}
             ${summaryCard('Total Cash', latest.cash, prev.cash, 'cash')}
             ${summaryCard('Total Assets', latest.assets, prev.assets, 'assets')}
-            ${summaryCard('Joint Accounts', latest.joint, prev.joint, 'joint')}
+
             ${summaryCard('Investments', latest.investments, prev.investments, 'invest')}
             ${summaryCard('Total Debt', latest.debt, prev.debt, 'debt', true)}
           </div>
@@ -610,7 +608,6 @@
           datasets: [
             { label: 'Cash', data: ts.map(r => r.cash), borderColor: COLORS.cash, backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Assets', data: ts.map(r => r.assets), borderColor: COLORS.assets, backgroundColor: 'rgba(202,138,4,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
-            { label: 'Joint', data: ts.map(r => r.joint), borderColor: COLORS.joint, backgroundColor: 'rgba(2,132,199,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Investments', data: ts.map(r => r.investments), borderColor: COLORS.math, backgroundColor: 'rgba(37,99,235,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Debt', data: ts.map(r => -r.debt), borderColor: COLORS.debt, backgroundColor: 'rgba(220,38,38,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
           ]
@@ -625,8 +622,6 @@
       const segments = [
         { label: 'Cash', value: latest.cash, color: COLORS.cash },
         { label: 'Assets', value: latest.assets, color: COLORS.assets },
-        { label: 'Joint', value: latest.joint, color: COLORS.joint },
-        { label: 'Business', value: latest.business, color: COLORS.business },
         { label: 'Investments', value: latest.investments, color: COLORS.math },
       ].filter(s => s.value > 0);
 
