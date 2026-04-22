@@ -1,7 +1,7 @@
 const { google } = require('googleapis');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '1mY9h_NoEW2wmA_axQp43vRXN5qwxeglridsb0umpXss';
-const SHEET_NAME = process.env.SHEET_NAME || 'Sheet1';
+const SHEET_NAME = process.env.SHEET_NAME || 'Accounts';
 
 function getAuthClient() {
   if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
