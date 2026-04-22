@@ -59,7 +59,16 @@ module.exports = async function handler(req, res) {
       const name = (cell.formattedValue || '').trim();
       if (!name) continue;
       const bgColor = cell.effectiveFormat?.backgroundColor;
-      const category = categorizeByColor(bgColor);
+      let category = categorizeByColor(bgColor);
+
+      // Override: columns with "Total", "SUMS", "Net Worth", "Real Net Worth" are
+      // calculated summary columns — force them to "math" so they're excluded.
+      const lowerName = name.toLowerCase();
+      if (lowerName.startsWith('total') || lowerName.startsWith('sums') ||
+          lowerName.startsWith('net worth') || lowerName.startsWith('real net worth')) {
+        category = 'math';
+      }
+
       columns.push({ index: i, name, category });
     }
 
