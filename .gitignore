@@ -1,0 +1,4 @@
+node_modules/
+.env
+credentials.json
+ovifinance-5ef8a3b1e28e.json

@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ovi Finance Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    /* ── Reset & Base ──────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f1a;
+      --card:      #1a1a2e;
+      --card-alt:  #16213e;
+      --border:    #2a2a4a;
+      --text:      #e8e8f0;
+      --text-dim:  #8888aa;
+      --cash:      #00E676;
+      --assets:    #FFD600;
+      --joint:     #40C4FF;
+      --business:  #CE93D8;
+      --debt:      #FF5252;
+      --math:      #448AFF;
+      --accent:    #7C4DFF;
+      --positive:  #00E676;
+      --negative:  #FF5252;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 1.5rem 2rem;
+      border-bottom: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--cash), var(--joint), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header .subtitle { color: var(--text-dim); font-size: 0.85rem; }
+    .header .refresh-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: opacity .2s;
+    }
+    .header .refresh-btn:hover { opacity: 0.85; }
+    .header .last-updated { color: var(--text-dim); font-size: 0.75rem; }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    .dashboard { padding: 1.5rem; max-width: 1440px; margin: 0 auto; }
+
+    /* Summary cards row */
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .summary-card.cash::before    { background: var(--cash); }
+    .summary-card.assets::before  { background: var(--assets); }
+    .summary-card.debt::before    { background: var(--debt); }
+    .summary-card.net::before     { background: linear-gradient(90deg, var(--cash), var(--accent)); }
+    .summary-card.joint::before   { background: var(--joint); }
+    .summary-card.invest::before  { background: var(--math); }
+
+    .summary-card .label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .summary-card .value { font-size: 1.8rem; font-weight: 700; margin: 0.3rem 0; }
+    .summary-card .change { font-size: 0.8rem; font-weight: 600; }
+    .summary-card .change.positive { color: var(--positive); }
+    .summary-card .change.negative { color: var(--negative); }
+
+    /* Chart grid */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .chart-card.full-width { grid-column: 1 / -1; }
+    .chart-card h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .chart-card h3 .dot {
+      width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+    }
+    .chart-container { position: relative; width: 100%; }
+
+    /* Accounts table */
+    .accounts-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .accounts-table th, .accounts-table td {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .accounts-table th {
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+    }
+    .accounts-table .cat-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .accounts-table .cat-badge.cash     { background: rgba(0,230,118,0.15); color: var(--cash); }
+    .accounts-table .cat-badge.assets   { background: rgba(255,214,0,0.15); color: var(--assets); }
+    .accounts-table .cat-badge.joint    { background: rgba(64,196,255,0.15); color: var(--joint); }
+    .accounts-table .cat-badge.business { background: rgba(206,147,216,0.15); color: var(--business); }
+    .accounts-table .cat-badge.debt     { background: rgba(255,82,82,0.15); color: var(--debt); }
+    .accounts-table .cat-badge.math     { background: rgba(68,138,255,0.15); color: var(--math); }
+
+    /* Projection controls */
+    .projection-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .projection-controls button {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all .2s;
+    }
+    .projection-controls button.active,
+    .projection-controls button:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* Loading & Error states */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1rem;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      background: rgba(255,82,82,0.1);
+      border: 1px solid var(--debt);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 600px;
+      margin: 3rem auto;
+    }
+    .error-box h2 { color: var(--debt); margin-bottom: 0.5rem; }
+    .error-box code {
+      display: block;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      text-align: left;
+      overflow-x: auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .chart-grid { grid-template-columns: 1fr; }
+      .summary-row { grid-template-columns: repeat(2, 1fr); }
+      .header h1 { font-size: 1.2rem; }
+      .summary-card .value { font-size: 1.3rem; }
+      .dashboard { padding: 1rem; }
+    }
+    @media (max-width: 480px) {
+      .summary-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>Ovi Finance Dashboard</h1>
+      <span class="subtitle">Live from Google Sheets</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <span class="last-updated" id="lastUpdated"></span>
+      <button class="refresh-btn" onclick="loadData()">Refresh</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="app">
+    <div class="loading" id="loadingState">
+      <div class="spinner"></div>
+      <p style="color:var(--text-dim)">Loading your financial data...</p>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // GLOBALS
+    // ═══════════════════════════════════════════════════════════════════════
+    const COLORS = {
+      cash:     '#00E676',
+      assets:   '#FFD600',
+      joint:    '#40C4FF',
+      business: '#CE93D8',
+      debt:     '#FF5252',
+      math:     '#448AFF',
+      other:    '#888888',
+    };
+
+    let rawData = null;
+    let charts = {};
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+    function fmt(n) {
+      if (n === null || n === undefined || isNaN(n)) return '$0';
+      const abs = Math.abs(n);
+      if (abs >= 1e6) return (n < 0 ? '-' : '') + '$' + (abs / 1e6).toFixed(2) + 'M';
+      if (abs >= 1e3) return (n < 0 ? '-' : '') + '$' + (abs / 1e3).toFixed(1) + 'K';
+      return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    function fmtFull(n) {
+      if (n === null || n === undefined || isNaN(n)) return '$0';
+      return (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    function parseDate(str) {
+      if (!str) return null;
+      const d = new Date(str);
+      return isNaN(d) ? null : d;
+    }
+
+    function pct(a, b) {
+      if (!b || b === 0) return 0;
+      return ((a - b) / Math.abs(b)) * 100;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // DATA PROCESSING
+    // ═══════════════════════════════════════════════════════════════════════
+    function getColumnsByCategory(columns, category) {
+      return columns.filter(c => c.category === category);
+    }
+
+    function sumCategory(row, columns, category) {
+      return getColumnsByCategory(columns, category)
+        .reduce((sum, col) => sum + (parseFloat(row[col.name]) || 0), 0);
+    }
+
+    function computeTimeSeries(data) {
+      const { columns, rows } = data;
+      return rows.map(row => {
+        const date = parseDate(row.date);
+        const cash = sumCategory(row, columns, 'cash');
+        const assets = sumCategory(row, columns, 'assets');
+        const joint = sumCategory(row, columns, 'joint');
+        const business = sumCategory(row, columns, 'business');
+        const debt = sumCategory(row, columns, 'debt');
+        const investments = sumCategory(row, columns, 'math');
+        const totalPositive = cash + assets + joint + business + investments;
+        const netWorth = totalPositive - Math.abs(debt);
+        return { date, cash, assets, joint, business, debt: Math.abs(debt), investments, netWorth, raw: row };
+      }).filter(r => r.date);
+    }
+
+    function linearProjection(series, months) {
+      if (series.length < 2) return [];
+      // Use last 12 data points (or all if fewer) to compute trend
+      const recent = series.slice(-12);
+      const n = recent.length;
+      const xs = recent.map((_, i) => i);
+      const ys = recent.map(s => s.netWorth);
+      const xMean = xs.reduce((a, b) => a + b, 0) / n;
+      const yMean = ys.reduce((a, b) => a + b, 0) / n;
+      const num = xs.reduce((s, x, i) => s + (x - xMean) * (ys[i] - yMean), 0);
+      const den = xs.reduce((s, x) => s + (x - xMean) ** 2, 0);
+      const slope = den ? num / den : 0;
+      const intercept = yMean - slope * xMean;
+
+      // Average time between snapshots in ms
+      const avgGap = (recent[n - 1].date - recent[0].date) / (n - 1);
+      const lastDate = series[series.length - 1].date;
+      const lastIdx = n - 1;
+
+      const projections = [];
+      const stepsPerMonth = 1;
+      const totalSteps = months * stepsPerMonth;
+
+      for (let i = 1; i <= totalSteps; i++) {
+        const futureDate = new Date(lastDate.getTime() + avgGap * i);
+        const futureY = slope * (lastIdx + i) + intercept;
+        projections.push({ date: futureDate, netWorth: futureY });
+      }
+      return projections;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // RENDERING
+    // ═══════════════════════════════════════════════════════════════════════
+    function renderDashboard(data) {
+      const ts = computeTimeSeries(data);
+      if (ts.length === 0) {
+        document.getElementById('app').innerHTML = '<div class="error-box"><h2>No Data</h2><p>No valid rows found in the spreadsheet.</p></div>';
+        return;
+      }
+
+      const latest = ts[ts.length - 1];
+      const prev = ts.length > 1 ? ts[ts.length - 2] : latest;
+
+      // Build HTML
+      document.getElementById('app').innerHTML = `
+        <div class="dashboard">
+          <!-- Summary Cards -->
+          <div class="summary-row">
+            ${summaryCard('Net Worth', latest.netWorth, prev.netWorth, 'net')}
+            ${summaryCard('Total Cash', latest.cash, prev.cash, 'cash')}
+            ${summaryCard('Total Assets', latest.assets, prev.assets, 'assets')}
+            ${summaryCard('Joint Accounts', latest.joint, prev.joint, 'joint')}
+            ${summaryCard('Investments', latest.investments, prev.investments, 'invest')}
+            ${summaryCard('Total Debt', latest.debt, prev.debt, 'debt', true)}
+          </div>
+
+          <!-- Charts Row 1: Net Worth + Breakdown -->
+          <div class="chart-grid">
+            <div class="chart-card full-width">
+              <h3><span class="dot" style="background:var(--accent)"></span> Net Worth Over Time</h3>
+              <div class="chart-container"><canvas id="netWorthChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3><span class="dot" style="background:var(--cash)"></span> Cash vs Assets vs Debt</h3>
+              <div class="chart-container"><canvas id="breakdownChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <h3><span class="dot" style="background:var(--assets)"></span> Current Allocation</h3>
+              <div class="chart-container"><canvas id="allocationChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Month-over-Month + Projections -->
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3><span class="dot" style="background:var(--positive)"></span> Snapshot-to-Snapshot Change</h3>
+              <div class="chart-container"><canvas id="momChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <h3><span class="dot" style="background:var(--math)"></span> Net Worth Projection</h3>
+              <div class="projection-controls">
+                <button class="active" onclick="updateProjection(6, this)">6 Mo</button>
+                <button onclick="updateProjection(12, this)">12 Mo</button>
+                <button onclick="updateProjection(24, this)">24 Mo</button>
+              </div>
+              <div class="chart-container"><canvas id="projectionChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Debt Tracker -->
+          <div class="chart-grid">
+            <div class="chart-card full-width">
+              <h3><span class="dot" style="background:var(--debt)"></span> Debt Payoff Tracker</h3>
+              <div class="chart-container"><canvas id="debtChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Account Balances Table -->
+          <div class="chart-grid">
+            <div class="chart-card full-width">
+              <h3><span class="dot" style="background:var(--joint)"></span> Account Balances (Latest Snapshot)</h3>
+              <div style="overflow-x:auto;">${accountsTable(data, latest)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // ── Draw Charts ──────────────────────────────────────────────────
+      drawNetWorthChart(ts);
+      drawBreakdownChart(ts);
+      drawAllocationChart(latest);
+      drawMoMChart(ts);
+      drawProjectionChart(ts, 6);
+      drawDebtChart(ts);
+    }
+
+    // ── Summary Card HTML ────────────────────────────────────────────────
+    function summaryCard(label, current, previous, cls, isDebt = false) {
+      const change = pct(current, previous);
+      const changeClass = isDebt
+        ? (change > 0 ? 'negative' : 'positive')
+        : (change >= 0 ? 'positive' : 'negative');
+      const arrow = change >= 0 ? '&#9650;' : '&#9660;';
+      return `
+        <div class="summary-card ${cls}">
+          <div class="label">${label}</div>
+          <div class="value">${fmtFull(current)}</div>
+          <div class="change ${changeClass}">
+            ${arrow} ${Math.abs(change).toFixed(1)}% from last snapshot
+          </div>
+        </div>`;
+    }
+
+    // ── Accounts Table HTML ──────────────────────────────────────────────
+    function accountsTable(data, latest) {
+      const cols = data.columns.filter(c => c.category !== 'other');
+      const sorted = [...cols].sort((a, b) => {
+        const va = Math.abs(parseFloat(latest.raw[a.name]) || 0);
+        const vb = Math.abs(parseFloat(latest.raw[b.name]) || 0);
+        return vb - va;
+      });
+
+      let rows = sorted.map(col => {
+        const val = parseFloat(latest.raw[col.name]) || 0;
+        return `<tr>
+          <td>${col.name}</td>
+          <td><span class="cat-badge ${col.category}">${col.category}</span></td>
+          <td style="text-align:right;font-weight:600;">${fmtFull(val)}</td>
+        </tr>`;
+      }).join('');
+
+      return `<table class="accounts-table">
+        <thead><tr><th>Account</th><th>Category</th><th style="text-align:right">Balance</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CHARTS
+    // ═══════════════════════════════════════════════════════════════════════
+    const chartDefaults = {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: '#e8e8f0', font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: '#1a1a2e',
+          titleColor: '#e8e8f0',
+          bodyColor: '#e8e8f0',
+          borderColor: '#2a2a4a',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${fmtFull(ctx.parsed.y)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#8888aa', maxTicksLimit: 12 },
+          grid: { color: 'rgba(42,42,74,0.4)' }
+        },
+        y: {
+          ticks: {
+            color: '#8888aa',
+            callback: v => fmt(v)
+          },
+          grid: { color: 'rgba(42,42,74,0.4)' }
+        }
+      }
+    };
+
+    function makeLabels(ts) {
+      return ts.map(r => r.date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+    }
+
+    // 1. Net Worth Over Time
+    function drawNetWorthChart(ts) {
+      const ctx = document.getElementById('netWorthChart').getContext('2d');
+      charts.netWorth = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: makeLabels(ts),
+          datasets: [{
+            label: 'Net Worth',
+            data: ts.map(r => r.netWorth),
+            borderColor: '#7C4DFF',
+            backgroundColor: 'rgba(124,77,255,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            borderWidth: 2.5,
+          }]
+        },
+        options: { ...chartDefaults, aspectRatio: 2.5 }
+      });
+    }
+
+    // 2. Cash vs Assets vs Debt (stacked area)
+    function drawBreakdownChart(ts) {
+      const ctx = document.getElementById('breakdownChart').getContext('2d');
+      charts.breakdown = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: makeLabels(ts),
+          datasets: [
+            { label: 'Cash', data: ts.map(r => r.cash), borderColor: COLORS.cash, backgroundColor: 'rgba(0,230,118,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Assets', data: ts.map(r => r.assets), borderColor: COLORS.assets, backgroundColor: 'rgba(255,214,0,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Joint', data: ts.map(r => r.joint), borderColor: COLORS.joint, backgroundColor: 'rgba(64,196,255,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Investments', data: ts.map(r => r.investments), borderColor: COLORS.math, backgroundColor: 'rgba(68,138,255,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Debt', data: ts.map(r => -r.debt), borderColor: COLORS.debt, backgroundColor: 'rgba(255,82,82,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
+          ]
+        },
+        options: chartDefaults
+      });
+    }
+
+    // 3. Current Allocation (doughnut)
+    function drawAllocationChart(latest) {
+      const ctx = document.getElementById('allocationChart').getContext('2d');
+      const segments = [
+        { label: 'Cash', value: latest.cash, color: COLORS.cash },
+        { label: 'Assets', value: latest.assets, color: COLORS.assets },
+        { label: 'Joint', value: latest.joint, color: COLORS.joint },
+        { label: 'Business', value: latest.business, color: COLORS.business },
+        { label: 'Investments', value: latest.investments, color: COLORS.math },
+      ].filter(s => s.value > 0);
+
+      charts.allocation = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: segments.map(s => s.label),
+          datasets: [{
+            data: segments.map(s => s.value),
+            backgroundColor: segments.map(s => s.color),
+            borderColor: '#1a1a2e',
+            borderWidth: 3,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#e8e8f0', font: { size: 11 }, padding: 15 } },
+            tooltip: {
+              backgroundColor: '#1a1a2e',
+              titleColor: '#e8e8f0',
+              bodyColor: '#e8e8f0',
+              callbacks: {
+                label: ctx => {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  const pctVal = ((ctx.parsed / total) * 100).toFixed(1);
+                  return `${ctx.label}: ${fmtFull(ctx.parsed)} (${pctVal}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 4. Snapshot-to-Snapshot Change
+    function drawMoMChart(ts) {
+      if (ts.length < 2) return;
+      const changes = [];
+      for (let i = 1; i < ts.length; i++) {
+        changes.push({
+          label: ts[i].date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+          value: ts[i].netWorth - ts[i - 1].netWorth,
+        });
+      }
+
+      const ctx = document.getElementById('momChart').getContext('2d');
+      charts.mom = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: changes.map(c => c.label),
+          datasets: [{
+            label: 'Net Worth Change',
+            data: changes.map(c => c.value),
+            backgroundColor: changes.map(c => c.value >= 0 ? 'rgba(0,230,118,0.7)' : 'rgba(255,82,82,0.7)'),
+            borderColor: changes.map(c => c.value >= 0 ? COLORS.cash : COLORS.debt),
+            borderWidth: 1,
+            borderRadius: 4,
+          }]
+        },
+        options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
+      });
+    }
+
+    // 5. Net Worth Projection
+    function drawProjectionChart(ts, months) {
+      const projected = linearProjection(ts, months);
+      const histLabels = makeLabels(ts);
+      const projLabels = projected.map(r => r.date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      const allLabels = [...histLabels, ...projLabels];
+
+      const histData = ts.map(r => r.netWorth);
+      const projData = new Array(histLabels.length).fill(null);
+      // Connect projection line to last historical point
+      projData[projData.length - 1] = histData[histData.length - 1];
+      const projValues = projected.map(r => r.netWorth);
+
+      const ctx = document.getElementById('projectionChart').getContext('2d');
+      if (charts.projection) charts.projection.destroy();
+
+      charts.projection = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: allLabels,
+          datasets: [
+            {
+              label: 'Actual',
+              data: [...histData, ...new Array(projLabels.length).fill(null)],
+              borderColor: '#7C4DFF',
+              backgroundColor: 'rgba(124,77,255,0.1)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 2,
+              borderWidth: 2.5,
+            },
+            {
+              label: 'Projected',
+              data: [...projData, ...projValues],
+              borderColor: '#FFD600',
+              borderDash: [8, 4],
+              backgroundColor: 'rgba(255,214,0,0.05)',
+              fill: true,
+              tension: 0.1,
+              pointRadius: 2,
+              borderWidth: 2,
+            }
+          ]
+        },
+        options: chartDefaults
+      });
+    }
+
+    function updateProjection(months, btn) {
+      const ts = computeTimeSeries(rawData);
+      drawProjectionChart(ts, months);
+      document.querySelectorAll('.projection-controls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // 6. Debt Payoff Tracker
+    function drawDebtChart(ts) {
+      const debtData = ts.filter(r => r.debt > 0);
+      if (debtData.length === 0) {
+        document.getElementById('debtChart').parentElement.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:2rem;">No debt data found!</p>';
+        return;
+      }
+
+      const ctx = document.getElementById('debtChart').getContext('2d');
+      charts.debt = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: debtData.map(r => r.date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })),
+          datasets: [{
+            label: 'Total Debt',
+            data: debtData.map(r => r.debt),
+            borderColor: COLORS.debt,
+            backgroundColor: 'rgba(255,82,82,0.15)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3,
+            borderWidth: 2.5,
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          aspectRatio: 3,
+          plugins: {
+            ...chartDefaults.plugins,
+            legend: { display: false },
+            annotation: undefined,
+          }
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOAD DATA
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadData() {
+      document.getElementById('app').innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p style="color:var(--text-dim)">Loading your financial data...</p>
+        </div>`;
+
+      try {
+        const res = await fetch('/api/data');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+
+        rawData = data;
+
+        // Destroy existing charts
+        Object.values(charts).forEach(c => { if (c && c.destroy) c.destroy(); });
+        charts = {};
+
+        renderDashboard(data);
+        document.getElementById('lastUpdated').textContent =
+          'Updated: ' + new Date().toLocaleTimeString();
+      } catch (err) {
+        document.getElementById('app').innerHTML = `
+          <div class="error-box">
+            <h2>Could not load data</h2>
+            <p>Make sure your Google Sheets API credentials are set up correctly.</p>
+            <code>${err.message}</code>
+          </div>`;
+      }
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────
+    loadData();
+  </script>
+</body>
+</html>
