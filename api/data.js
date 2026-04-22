@@ -69,8 +69,8 @@ module.exports = async function handler(req, res) {
         category = 'math';
       }
 
-      // Override: Kia debt column should always be debt
-      if (lowerName.includes('kia') && lowerName.includes('debt')) {
+      // Override: Kia debt column should always be debt (but not if it's a "Total" row)
+      if (lowerName.includes('kia') && lowerName.includes('debt') && !lowerName.startsWith('total')) {
         category = 'debt';
       }
 
