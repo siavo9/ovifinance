@@ -6,104 +6,105 @@
   <title>Ovi Finance Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* ── Reset & Base ──────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0f0f1a;
-      --card:      #1a1a2e;
-      --card-alt:  #16213e;
-      --border:    #2a2a4a;
-      --text:      #e8e8f0;
-      --text-dim:  #8888aa;
-      --cash:      #00E676;
-      --assets:    #FFD600;
-      --joint:     #40C4FF;
-      --business:  #CE93D8;
-      --debt:      #FF5252;
-      --math:      #448AFF;
-      --accent:    #7C4DFF;
-      --positive:  #00E676;
-      --negative:  #FF5252;
+      --bg:        #f5f6fa;
+      --card:      #ffffff;
+      --card-alt:  #f0f1f5;
+      --border:    #e2e4ea;
+      --text:      #1a1d2e;
+      --text-dim:  #6b7280;
+      --cash:      #16a34a;
+      --assets:    #ca8a04;
+      --joint:     #0284c7;
+      --business:  #9333ea;
+      --debt:      #dc2626;
+      --math:      #2563eb;
+      --accent:    #1e40af;
+      --positive:  #16a34a;
+      --negative:  #dc2626;
     }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
       line-height: 1.5;
       min-height: 100vh;
     }
 
     /* ── Header ────────────────────────────────────────────────────────── */
     .header {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      padding: 1.5rem 2rem;
-      border-bottom: 2px solid var(--accent);
+      background: #ffffff;
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .header h1 {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
       font-weight: 700;
-      background: linear-gradient(90deg, var(--cash), var(--joint), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--text);
     }
-    .header .subtitle { color: var(--text-dim); font-size: 0.85rem; }
+    .header .subtitle { color: var(--text-dim); font-size: 0.8rem; }
     .header .refresh-btn {
       background: var(--accent);
       border: none;
       color: white;
-      padding: 0.5rem 1.2rem;
-      border-radius: 8px;
+      padding: 0.45rem 1.1rem;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      transition: opacity .2s;
+      transition: background .2s;
     }
-    .header .refresh-btn:hover { opacity: 0.85; }
+    .header .refresh-btn:hover { background: #1e3a8a; }
     .header .last-updated { color: var(--text-dim); font-size: 0.75rem; }
 
     /* ── Layout ─────────────────────────────────────────────────────────── */
-    .dashboard { padding: 1.5rem; max-width: 1440px; margin: 0 auto; }
+    .dashboard { padding: 1.5rem 2rem; max-width: 1440px; margin: 0 auto; }
 
     /* Summary cards row */
     .summary-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
       margin-bottom: 1.5rem;
     }
     .summary-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.2rem 1.5rem;
+      border-radius: 10px;
+      padding: 1.2rem 1.4rem;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .summary-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
+      top: 0; left: 0;
+      width: 4px;
+      height: 100%;
     }
     .summary-card.cash::before    { background: var(--cash); }
     .summary-card.assets::before  { background: var(--assets); }
     .summary-card.debt::before    { background: var(--debt); }
-    .summary-card.net::before     { background: linear-gradient(90deg, var(--cash), var(--accent)); }
+    .summary-card.net::before     { background: var(--accent); }
     .summary-card.joint::before   { background: var(--joint); }
     .summary-card.invest::before  { background: var(--math); }
 
-    .summary-card .label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-    .summary-card .value { font-size: 1.8rem; font-weight: 700; margin: 0.3rem 0; }
-    .summary-card .change { font-size: 0.8rem; font-weight: 600; }
+    .summary-card .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+    .summary-card .value { font-size: 1.6rem; font-weight: 700; margin: 0.25rem 0; color: var(--text); }
+    .summary-card .change { font-size: 0.75rem; font-weight: 500; }
     .summary-card .change.positive { color: var(--positive); }
     .summary-card .change.negative { color: var(--negative); }
 
@@ -111,18 +112,20 @@
     .chart-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
     }
     .chart-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
+      border-radius: 10px;
+      padding: 1.4rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .chart-card.full-width { grid-column: 1 / -1; }
     .chart-card h3 {
-      font-size: 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
       margin-bottom: 1rem;
       color: var(--text);
       display: flex;
@@ -130,7 +133,7 @@
       gap: 0.5rem;
     }
     .chart-card h3 .dot {
-      width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
     }
     .chart-container { position: relative; width: 100%; }
 
@@ -138,7 +141,7 @@
     .accounts-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
     }
     .accounts-table th, .accounts-table td {
       padding: 0.6rem 1rem;
@@ -148,38 +151,41 @@
     .accounts-table th {
       color: var(--text-dim);
       text-transform: uppercase;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       letter-spacing: 0.05em;
+      font-weight: 600;
     }
+    .accounts-table tbody tr:hover { background: var(--card-alt); }
     .accounts-table .cat-badge {
       display: inline-block;
       padding: 2px 8px;
       border-radius: 4px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
       text-transform: uppercase;
     }
-    .accounts-table .cat-badge.cash     { background: rgba(0,230,118,0.15); color: var(--cash); }
-    .accounts-table .cat-badge.assets   { background: rgba(255,214,0,0.15); color: var(--assets); }
-    .accounts-table .cat-badge.joint    { background: rgba(64,196,255,0.15); color: var(--joint); }
-    .accounts-table .cat-badge.business { background: rgba(206,147,216,0.15); color: var(--business); }
-    .accounts-table .cat-badge.debt     { background: rgba(255,82,82,0.15); color: var(--debt); }
-    .accounts-table .cat-badge.math     { background: rgba(68,138,255,0.15); color: var(--math); }
+    .accounts-table .cat-badge.cash     { background: #dcfce7; color: var(--cash); }
+    .accounts-table .cat-badge.assets   { background: #fef9c3; color: var(--assets); }
+    .accounts-table .cat-badge.joint    { background: #dbeafe; color: var(--joint); }
+    .accounts-table .cat-badge.business { background: #f3e8ff; color: var(--business); }
+    .accounts-table .cat-badge.debt     { background: #fee2e2; color: var(--debt); }
+    .accounts-table .cat-badge.math     { background: #dbeafe; color: var(--math); }
 
     /* Projection controls */
     .projection-controls {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.4rem;
       margin-bottom: 1rem;
     }
     .projection-controls button {
       background: var(--card-alt);
       border: 1px solid var(--border);
       color: var(--text-dim);
-      padding: 0.4rem 1rem;
+      padding: 0.35rem 0.9rem;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
+      font-weight: 500;
       transition: all .2s;
     }
     .projection-controls button.active,
@@ -199,8 +205,8 @@
       gap: 1rem;
     }
     .spinner {
-      width: 48px; height: 48px;
-      border: 4px solid var(--border);
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -208,24 +214,26 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .error-box {
-      background: rgba(255,82,82,0.1);
-      border: 1px solid var(--debt);
-      border-radius: 12px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
       padding: 2rem;
       text-align: center;
       max-width: 600px;
       margin: 3rem auto;
     }
-    .error-box h2 { color: var(--debt); margin-bottom: 0.5rem; }
+    .error-box h2 { color: var(--debt); margin-bottom: 0.5rem; font-size: 1.1rem; }
     .error-box code {
       display: block;
       margin-top: 1rem;
       padding: 1rem;
-      background: var(--bg);
-      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
       font-size: 0.8rem;
       text-align: left;
       overflow-x: auto;
+      color: var(--text);
     }
 
     /* Responsive */
@@ -259,7 +267,7 @@
   <div id="app">
     <div class="loading" id="loadingState">
       <div class="spinner"></div>
-      <p style="color:var(--text-dim)">Loading your financial data...</p>
+      <p style="color:var(--text-dim);">Loading your financial data...</p>
     </div>
   </div>
 
@@ -268,13 +276,13 @@
     // GLOBALS
     // ═══════════════════════════════════════════════════════════════════════
     const COLORS = {
-      cash:     '#00E676',
-      assets:   '#FFD600',
-      joint:    '#40C4FF',
-      business: '#CE93D8',
-      debt:     '#FF5252',
-      math:     '#448AFF',
-      other:    '#888888',
+      cash:     '#16a34a',
+      assets:   '#ca8a04',
+      joint:    '#0284c7',
+      business: '#9333ea',
+      debt:     '#dc2626',
+      math:     '#2563eb',
+      other:    '#6b7280',
     };
 
     let rawData = null;
@@ -448,7 +456,7 @@
 
           <!-- Debug: Column Categorization -->
           <div class="chart-grid">
-            <div class="chart-card full-width" style="border-color:var(--accent);">
+            <div class="chart-card full-width" style="border-color:#93c5fd;">
               <h3 style="color:var(--accent);">Column Categorization (Debug)</h3>
               <p style="color:var(--text-dim);font-size:0.8rem;margin-bottom:1rem;">
                 Review how each column is being categorized. If any are wrong, let me know so I can fix it.
@@ -536,13 +544,14 @@
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { labels: { color: '#e8e8f0', font: { size: 11 } } },
+        legend: { labels: { color: '#1a1d2e', font: { size: 11, family: 'Inter' } } },
         tooltip: {
-          backgroundColor: '#1a1a2e',
-          titleColor: '#e8e8f0',
-          bodyColor: '#e8e8f0',
-          borderColor: '#2a2a4a',
+          backgroundColor: '#ffffff',
+          titleColor: '#1a1d2e',
+          bodyColor: '#1a1d2e',
+          borderColor: '#e2e4ea',
           borderWidth: 1,
+          padding: 10,
           callbacks: {
             label: ctx => `${ctx.dataset.label}: ${fmtFull(ctx.parsed.y)}`
           }
@@ -550,15 +559,16 @@
       },
       scales: {
         x: {
-          ticks: { color: '#8888aa', maxTicksLimit: 12 },
-          grid: { color: 'rgba(42,42,74,0.4)' }
+          ticks: { color: '#6b7280', maxTicksLimit: 12, font: { size: 10, family: 'Inter' } },
+          grid: { color: 'rgba(0,0,0,0.05)' }
         },
         y: {
           ticks: {
-            color: '#8888aa',
-            callback: v => fmt(v)
+            color: '#6b7280',
+            callback: v => fmt(v),
+            font: { size: 10, family: 'Inter' }
           },
-          grid: { color: 'rgba(42,42,74,0.4)' }
+          grid: { color: 'rgba(0,0,0,0.05)' }
         }
       }
     };
@@ -577,8 +587,8 @@
           datasets: [{
             label: 'Net Worth',
             data: ts.map(r => r.netWorth),
-            borderColor: '#7C4DFF',
-            backgroundColor: 'rgba(124,77,255,0.1)',
+            borderColor: '#1e40af',
+            backgroundColor: 'rgba(30,64,175,0.08)',
             fill: true,
             tension: 0.3,
             pointRadius: 3,
@@ -598,11 +608,11 @@
         data: {
           labels: makeLabels(ts),
           datasets: [
-            { label: 'Cash', data: ts.map(r => r.cash), borderColor: COLORS.cash, backgroundColor: 'rgba(0,230,118,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
-            { label: 'Assets', data: ts.map(r => r.assets), borderColor: COLORS.assets, backgroundColor: 'rgba(255,214,0,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
-            { label: 'Joint', data: ts.map(r => r.joint), borderColor: COLORS.joint, backgroundColor: 'rgba(64,196,255,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
-            { label: 'Investments', data: ts.map(r => r.investments), borderColor: COLORS.math, backgroundColor: 'rgba(68,138,255,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
-            { label: 'Debt', data: ts.map(r => -r.debt), borderColor: COLORS.debt, backgroundColor: 'rgba(255,82,82,0.15)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Cash', data: ts.map(r => r.cash), borderColor: COLORS.cash, backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Assets', data: ts.map(r => r.assets), borderColor: COLORS.assets, backgroundColor: 'rgba(202,138,4,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Joint', data: ts.map(r => r.joint), borderColor: COLORS.joint, backgroundColor: 'rgba(2,132,199,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Investments', data: ts.map(r => r.investments), borderColor: COLORS.math, backgroundColor: 'rgba(37,99,235,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Debt', data: ts.map(r => -r.debt), borderColor: COLORS.debt, backgroundColor: 'rgba(220,38,38,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
           ]
         },
         options: chartDefaults
@@ -627,18 +637,20 @@
           datasets: [{
             data: segments.map(s => s.value),
             backgroundColor: segments.map(s => s.color),
-            borderColor: '#1a1a2e',
+            borderColor: '#ffffff',
             borderWidth: 3,
           }]
         },
         options: {
           responsive: true,
           plugins: {
-            legend: { position: 'right', labels: { color: '#e8e8f0', font: { size: 11 }, padding: 15 } },
+            legend: { position: 'right', labels: { color: '#1a1d2e', font: { size: 11, family: 'Inter' }, padding: 15 } },
             tooltip: {
-              backgroundColor: '#1a1a2e',
-              titleColor: '#e8e8f0',
-              bodyColor: '#e8e8f0',
+              backgroundColor: '#ffffff',
+              titleColor: '#1a1d2e',
+              bodyColor: '#1a1d2e',
+              borderColor: '#e2e4ea',
+              borderWidth: 1,
               callbacks: {
                 label: ctx => {
                   const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
@@ -671,7 +683,7 @@
           datasets: [{
             label: 'Net Worth Change',
             data: changes.map(c => c.value),
-            backgroundColor: changes.map(c => c.value >= 0 ? 'rgba(0,230,118,0.7)' : 'rgba(255,82,82,0.7)'),
+            backgroundColor: changes.map(c => c.value >= 0 ? 'rgba(22,163,74,0.6)' : 'rgba(220,38,38,0.6)'),
             borderColor: changes.map(c => c.value >= 0 ? COLORS.cash : COLORS.debt),
             borderWidth: 1,
             borderRadius: 4,
@@ -705,8 +717,8 @@
             {
               label: 'Actual',
               data: [...histData, ...new Array(projLabels.length).fill(null)],
-              borderColor: '#7C4DFF',
-              backgroundColor: 'rgba(124,77,255,0.1)',
+              borderColor: '#1e40af',
+              backgroundColor: 'rgba(30,64,175,0.08)',
               fill: true,
               tension: 0.3,
               pointRadius: 2,
@@ -715,9 +727,9 @@
             {
               label: 'Projected',
               data: [...projData, ...projValues],
-              borderColor: '#FFD600',
+              borderColor: '#ca8a04',
               borderDash: [8, 4],
-              backgroundColor: 'rgba(255,214,0,0.05)',
+              backgroundColor: 'rgba(202,138,4,0.05)',
               fill: true,
               tension: 0.1,
               pointRadius: 2,
@@ -753,7 +765,7 @@
             label: 'Total Debt',
             data: debtData.map(r => r.debt),
             borderColor: COLORS.debt,
-            backgroundColor: 'rgba(255,82,82,0.15)',
+            backgroundColor: 'rgba(220,38,38,0.08)',
             fill: true,
             tension: 0.3,
             pointRadius: 3,
@@ -779,7 +791,7 @@
       document.getElementById('app').innerHTML = `
         <div class="loading">
           <div class="spinner"></div>
-          <p style="color:var(--text-dim)">Loading your financial data...</p>
+          <p style="color:var(--text-dim);">Loading your financial data...</p>
         </div>`;
 
       try {
