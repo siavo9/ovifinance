@@ -74,6 +74,24 @@ module.exports = async function handler(req, res) {
         category = 'debt';
       }
 
+      // Override: Crypto accounts
+      if (lowerName.includes('coinbase') || lowerName.includes('crypto') ||
+          lowerName.includes('lmwr') || lowerName.includes('affyn') ||
+          lowerName.includes('ovi99') || lowerName.includes('eth') ||
+          lowerName.includes('joint safe')) {
+        category = 'crypto';
+      }
+
+      // Override: Business cash accounts (columns starting with "biz")
+      if (lowerName.startsWith('biz') && !lowerName.includes('debt')) {
+        category = 'bizcash';
+      }
+
+      // Override: Investment accounts (a2z, aiden, jarsy)
+      if (lowerName.includes('a2z') || lowerName.includes('aiden') || lowerName.includes('jarsy')) {
+        category = 'investments';
+      }
+
       columns.push({ index: i, name, category });
     }
 
@@ -101,7 +119,7 @@ module.exports = async function handler(req, res) {
     }
 
     const accountColumns = columns.filter(
-      c => c.index > 1 && ['cash', 'assets', 'joint', 'business', 'debt', 'math'].includes(c.category)
+      c => c.index > 1 && ['cash', 'assets', 'debt', 'math', 'crypto', 'bizcash', 'investments'].includes(c.category)
     );
 
     res.json({

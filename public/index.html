@@ -23,6 +23,9 @@
       --joint:     #0284c7;
       --business:  #9333ea;
       --debt:      #dc2626;
+      --crypto:    #f59e0b;
+      --bizcash:   #7c3aed;
+      --investments: #0891b2;
       --math:      #2563eb;
       --accent:    #1e40af;
       --positive:  #16a34a;
@@ -100,7 +103,9 @@
     .summary-card.debt::before    { background: var(--debt); }
     .summary-card.net::before     { background: var(--accent); }
     .summary-card.joint::before   { background: var(--joint); }
-    .summary-card.invest::before  { background: var(--math); }
+    .summary-card.invest::before  { background: var(--investments); }
+    .summary-card.crypto::before  { background: var(--crypto); }
+    .summary-card.bizcash::before { background: var(--bizcash); }
 
     .summary-card .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
     .summary-card .value { font-size: 1.6rem; font-weight: 700; margin: 0.25rem 0; color: var(--text); }
@@ -169,7 +174,10 @@
     .accounts-table .cat-badge.joint    { background: #dbeafe; color: var(--joint); }
     .accounts-table .cat-badge.business { background: #f3e8ff; color: var(--business); }
     .accounts-table .cat-badge.debt     { background: #fee2e2; color: var(--debt); }
-    .accounts-table .cat-badge.math     { background: #dbeafe; color: var(--math); }
+    .accounts-table .cat-badge.math        { background: #dbeafe; color: var(--math); }
+    .accounts-table .cat-badge.crypto      { background: #fef3c7; color: var(--crypto); }
+    .accounts-table .cat-badge.bizcash     { background: #ede9fe; color: var(--bizcash); }
+    .accounts-table .cat-badge.investments { background: #cffafe; color: var(--investments); }
 
     /* Projection controls */
     .projection-controls {
@@ -537,13 +545,14 @@
     // GLOBALS
     // ═══════════════════════════════════════════════════════════════════════
     const COLORS = {
-      cash:     '#16a34a',
-      assets:   '#ca8a04',
-      joint:    '#0284c7',
-      business: '#9333ea',
-      debt:     '#dc2626',
-      math:     '#2563eb',
-      other:    '#6b7280',
+      cash:        '#16a34a',
+      assets:      '#ca8a04',
+      debt:        '#dc2626',
+      crypto:      '#f59e0b',
+      bizcash:     '#7c3aed',
+      investments: '#0891b2',
+      math:        '#2563eb',
+      other:       '#6b7280',
     };
 
     let rawData = null;
@@ -590,17 +599,17 @@
 
     function computeTimeSeries(data) {
       const { columns, rows } = data;
-      // EXCLUDE "math" columns — those are calculated totals in the spreadsheet
-      // and would cause double-counting if added to individual account sums.
       return rows.map(row => {
         const date = parseDate(row.date);
         const cash = sumCategory(row, columns, 'cash');
         const assets = sumCategory(row, columns, 'assets');
+        const crypto = sumCategory(row, columns, 'crypto');
+        const bizcash = sumCategory(row, columns, 'bizcash');
+        const investments = sumCategory(row, columns, 'investments');
         const debt = sumCategory(row, columns, 'debt');
-        // Don't include math columns in totals — they're spreadsheet formulas
-        const totalPositive = cash + assets;
+        const totalPositive = cash + assets + crypto + bizcash + investments;
         const netWorth = totalPositive - Math.abs(debt);
-        return { date, cash, assets, debt: Math.abs(debt), investments: 0, netWorth, raw: row };
+        return { date, cash, assets, crypto, bizcash, investments, debt: Math.abs(debt), netWorth, raw: row };
       }).filter(r => r.date);
     }
 
@@ -656,7 +665,8 @@
             ${summaryCard('Net Worth', latest.netWorth, prev.netWorth, 'net')}
             ${summaryCard('Total Cash', latest.cash, prev.cash, 'cash')}
             ${summaryCard('Total Assets', latest.assets, prev.assets, 'assets')}
-
+            ${summaryCard('Crypto', latest.crypto, prev.crypto, 'crypto')}
+            ${summaryCard('Business Cash', latest.bizcash, prev.bizcash, 'bizcash')}
             ${summaryCard('Investments', latest.investments, prev.investments, 'invest')}
             ${summaryCard('Total Debt', latest.debt, prev.debt, 'debt', true)}
           </div>
@@ -869,7 +879,9 @@
           datasets: [
             { label: 'Cash', data: ts.map(r => r.cash), borderColor: COLORS.cash, backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Assets', data: ts.map(r => r.assets), borderColor: COLORS.assets, backgroundColor: 'rgba(202,138,4,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
-            { label: 'Investments', data: ts.map(r => r.investments), borderColor: COLORS.math, backgroundColor: 'rgba(37,99,235,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Crypto', data: ts.map(r => r.crypto), borderColor: COLORS.crypto, backgroundColor: 'rgba(245,158,11,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Biz Cash', data: ts.map(r => r.bizcash), borderColor: COLORS.bizcash, backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Investments', data: ts.map(r => r.investments), borderColor: COLORS.investments, backgroundColor: 'rgba(8,145,178,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Debt', data: ts.map(r => -r.debt), borderColor: COLORS.debt, backgroundColor: 'rgba(220,38,38,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
           ]
         },
@@ -883,7 +895,9 @@
       const segments = [
         { label: 'Cash', value: latest.cash, color: COLORS.cash },
         { label: 'Assets', value: latest.assets, color: COLORS.assets },
-        { label: 'Investments', value: latest.investments, color: COLORS.math },
+        { label: 'Crypto', value: latest.crypto, color: COLORS.crypto },
+        { label: 'Biz Cash', value: latest.bizcash, color: COLORS.bizcash },
+        { label: 'Investments', value: latest.investments, color: COLORS.investments },
       ].filter(s => s.value > 0);
 
       charts.allocation = new Chart(ctx, {
