@@ -420,6 +420,67 @@
       border-color: var(--accent);
     }
 
+    /* ── Login Gate ─────────────────────────────────────────────────── */
+    .login-gate {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-gate.hidden { display: none; }
+    .login-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2.5rem 2rem;
+      width: 360px;
+      max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .login-box h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .login-box p { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 1.5rem; }
+    .login-box input {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 0.75rem;
+      transition: border-color 0.2s;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .login-box input:focus { border-color: var(--accent); }
+    .login-box button {
+      width: 100%;
+      padding: 0.65rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+    .login-box button:hover { background: #1e3a8a; }
+    .login-error {
+      color: var(--debt);
+      font-size: 0.78rem;
+      margin-top: 0.6rem;
+      display: none;
+    }
+
+    .app-content { display: none; }
+    .app-content.visible { display: block; }
+
     /* Responsive */
     @media (max-width: 768px) {
       .chat-panel { width: calc(100vw - 2rem); right: 1rem; bottom: 5rem; max-height: 70vh; }
@@ -436,6 +497,20 @@
   </style>
 </head>
 <body>
+
+  <!-- Login Gate -->
+  <div class="login-gate" id="loginGate">
+    <div class="login-box">
+      <h1>Ovi Finance</h1>
+      <p>Enter password to access your dashboard</p>
+      <input type="password" id="loginPassword" placeholder="Password" onkeydown="if(event.key==='Enter')attemptLogin()" autofocus />
+      <button onclick="attemptLogin()">Enter</button>
+      <div class="login-error" id="loginError">Incorrect password. Try again.</div>
+    </div>
+  </div>
+
+  <!-- App Content (hidden until authenticated) -->
+  <div class="app-content" id="appContent">
 
   <!-- Header -->
   <div class="header">
@@ -1001,8 +1076,8 @@
       }
     }
 
-    // ── Init ─────────────────────────────────────────────────────────────
-    loadData();
+    // ── Init (only load if already authenticated) ─────────────────────
+    if (sessionStorage.getItem('ovi_auth') === 'true') loadData();
   </script>
 
   <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -1177,6 +1252,35 @@
       isSending = false;
       document.getElementById('chatSend').disabled = false;
       document.getElementById('chatInput').focus();
+    }
+  </script>
+
+  </div><!-- /app-content -->
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOGIN GATE
+    // ═══════════════════════════════════════════════════════════════════════
+    const SITE_PASSWORD = 'ovaisinamullah';
+
+    function attemptLogin() {
+      const input = document.getElementById('loginPassword');
+      if (input.value === SITE_PASSWORD) {
+        document.getElementById('loginGate').classList.add('hidden');
+        document.getElementById('appContent').classList.add('visible');
+        sessionStorage.setItem('ovi_auth', 'true');
+        loadData();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    // Check if already authenticated this session
+    if (sessionStorage.getItem('ovi_auth') === 'true') {
+      document.getElementById('loginGate').classList.add('hidden');
+      document.getElementById('appContent').classList.add('visible');
     }
   </script>
 </body>
