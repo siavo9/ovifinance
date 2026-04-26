@@ -106,19 +106,22 @@ function buildFinanceSummary(data) {
 
   const cashCols = columns.filter(c => c.category === 'cash');
   const assetCols = columns.filter(c => c.category === 'assets');
+  const stockCols = columns.filter(c => c.category === 'stocks');
   const debtCols = columns.filter(c => c.category === 'debt');
 
   const sum = (row, cols) => cols.reduce((s, c) => s + (parseFloat(row[c.name]) || 0), 0);
 
   const totalCash = sum(latest, cashCols);
   const totalAssets = sum(latest, assetCols);
+  const totalStocks = sum(latest, stockCols);
   const totalDebt = Math.abs(sum(latest, debtCols));
-  const netWorth = totalCash + totalAssets - totalDebt;
+  const netWorth = totalCash + totalAssets + totalStocks - totalDebt;
 
   let summary = `## CURRENT FINANCIAL SNAPSHOT (as of ${latest.date})\n`;
   summary += `- Net Worth: $${netWorth.toLocaleString()}\n`;
   summary += `- Total Cash: $${totalCash.toLocaleString()}\n`;
   summary += `- Total Assets: $${totalAssets.toLocaleString()}\n`;
+  summary += `- Stocks/Retirement: $${totalStocks.toLocaleString()}\n`;
   summary += `- Total Debt: $${totalDebt.toLocaleString()}\n\n`;
 
   // Individual accounts
@@ -129,6 +132,11 @@ function buildFinanceSummary(data) {
 
   summary += `\n### Asset Accounts:\n`;
   assetCols.forEach(c => {
+    if (c.index > 0) summary += `- ${c.name}: $${(parseFloat(latest[c.name]) || 0).toLocaleString()}\n`;
+  });
+
+  summary += `\n### Stocks/Retirement Accounts:\n`;
+  stockCols.forEach(c => {
     if (c.index > 0) summary += `- ${c.name}: $${(parseFloat(latest[c.name]) || 0).toLocaleString()}\n`;
   });
 
@@ -143,9 +151,10 @@ function buildFinanceSummary(data) {
   recentRows.forEach(row => {
     const c = sum(row, cashCols);
     const a = sum(row, assetCols);
+    const st = sum(row, stockCols);
     const d = Math.abs(sum(row, debtCols));
-    const nw = c + a - d;
-    summary += `- ${row.date}: Net Worth $${nw.toLocaleString()} | Cash $${c.toLocaleString()} | Assets $${a.toLocaleString()} | Debt $${d.toLocaleString()}\n`;
+    const nw = c + a + st - d;
+    summary += `- ${row.date}: Net Worth $${nw.toLocaleString()} | Cash $${c.toLocaleString()} | Assets $${a.toLocaleString()} | Stocks/Ret $${st.toLocaleString()} | Debt $${d.toLocaleString()}\n`;
   });
 
   // Full history for deeper analysis
@@ -154,9 +163,10 @@ function buildFinanceSummary(data) {
     rows.forEach(row => {
       const c = sum(row, cashCols);
       const a = sum(row, assetCols);
+      const st = sum(row, stockCols);
       const d = Math.abs(sum(row, debtCols));
-      const nw = c + a - d;
-      summary += `- ${row.date}: NW $${nw.toLocaleString()} | Cash $${c.toLocaleString()} | Assets $${a.toLocaleString()} | Debt $${d.toLocaleString()}\n`;
+      const nw = c + a + st - d;
+      summary += `- ${row.date}: NW $${nw.toLocaleString()} | Cash $${c.toLocaleString()} | Assets $${a.toLocaleString()} | Stocks/Ret $${st.toLocaleString()} | Debt $${d.toLocaleString()}\n`;
     });
   }
 
@@ -165,12 +175,13 @@ function buildFinanceSummary(data) {
     summary += `\n### RECENT CHANGES:\n`;
     const last = rows[rows.length - 1];
     const prev = rows[rows.length - 2];
-    const lastNW = sum(last, cashCols) + sum(last, assetCols) - Math.abs(sum(last, debtCols));
-    const prevNW = sum(prev, cashCols) + sum(prev, assetCols) - Math.abs(sum(prev, debtCols));
+    const lastNW = sum(last, cashCols) + sum(last, assetCols) + sum(last, stockCols) - Math.abs(sum(last, debtCols));
+    const prevNW = sum(prev, cashCols) + sum(prev, assetCols) + sum(prev, stockCols) - Math.abs(sum(prev, debtCols));
     const change = lastNW - prevNW;
     const pctChange = prevNW !== 0 ? ((change / Math.abs(prevNW)) * 100).toFixed(1) : 0;
     summary += `- Net worth changed by $${change.toLocaleString()} (${pctChange}%) from ${prev.date} to ${last.date}\n`;
     summary += `- Cash changed by $${(sum(last, cashCols) - sum(prev, cashCols)).toLocaleString()}\n`;
+    summary += `- Stocks/Retirement changed by $${(sum(last, stockCols) - sum(prev, stockCols)).toLocaleString()}\n`;
     summary += `- Debt changed by $${(Math.abs(sum(last, debtCols)) - Math.abs(sum(prev, debtCols))).toLocaleString()}\n`;
   }
 

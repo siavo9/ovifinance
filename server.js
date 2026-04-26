@@ -91,6 +91,18 @@ app.get('/api/data', async (req, res) => {
       const bgColor = cell.effectiveFormat?.backgroundColor;
       const category = categorizeByColor(bgColor);
 
+      // Override: Stocks/Retirement accounts
+      const lowerName = name.toLowerCase();
+      if (lowerName.includes('edward jones') ||
+          lowerName.includes('titan') ||
+          lowerName.includes('robinhood') ||
+          lowerName.includes('fidelity') ||
+          lowerName.includes('529') || lowerName.includes('schwab') ||
+          lowerName.includes('kestra') ||
+          lowerName.includes('transamerica')) {
+        category = 'stocks';
+      }
+
       columns.push({ index: i, name, category });
     }
 
@@ -127,7 +139,7 @@ app.get('/api/data', async (req, res) => {
     // ── Build summary ─────────────────────────────────────────────────────
     // Only include account columns (skip date & legend columns)
     const accountColumns = columns.filter(
-      c => c.index > 1 && ['cash', 'assets', 'joint', 'business', 'debt', 'math'].includes(c.category)
+      c => c.index > 1 && ['cash', 'assets', 'joint', 'business', 'debt', 'math', 'stocks'].includes(c.category)
     );
 
     res.json({

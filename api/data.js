@@ -92,6 +92,17 @@ module.exports = async function handler(req, res) {
         category = 'investments';
       }
 
+      // Override: Stocks/Retirement accounts
+      if (lowerName.includes('edward jones') ||
+          lowerName.includes('titan') ||
+          lowerName.includes('robinhood') ||
+          lowerName.includes('fidelity') ||
+          lowerName.includes('529') || lowerName.includes('schwab') ||
+          lowerName.includes('kestra') ||
+          lowerName.includes('transamerica')) {
+        category = 'stocks';
+      }
+
       columns.push({ index: i, name, category });
     }
 
@@ -119,7 +130,7 @@ module.exports = async function handler(req, res) {
     }
 
     const accountColumns = columns.filter(
-      c => c.index > 1 && ['cash', 'assets', 'debt', 'math', 'crypto', 'bizcash', 'investments'].includes(c.category)
+      c => c.index > 1 && ['cash', 'assets', 'debt', 'math', 'crypto', 'bizcash', 'investments', 'stocks'].includes(c.category)
     );
 
     res.json({

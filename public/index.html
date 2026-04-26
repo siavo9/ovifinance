@@ -27,6 +27,7 @@
       --bizcash:   #7c3aed;
       --investments: #0891b2;
       --math:      #2563eb;
+      --stocks:    #8b5cf6;
       --accent:    #1e40af;
       --positive:  #16a34a;
       --negative:  #dc2626;
@@ -104,6 +105,7 @@
     .summary-card.net::before     { background: var(--accent); }
     .summary-card.joint::before   { background: var(--joint); }
     .summary-card.invest::before  { background: var(--investments); }
+    .summary-card.stocks::before   { background: var(--stocks); }
     .summary-card.crypto::before  { background: var(--crypto); }
     .summary-card.bizcash::before { background: var(--bizcash); }
 
@@ -178,6 +180,7 @@
     .accounts-table .cat-badge.crypto      { background: #fef3c7; color: var(--crypto); }
     .accounts-table .cat-badge.bizcash     { background: #ede9fe; color: var(--bizcash); }
     .accounts-table .cat-badge.investments { background: #cffafe; color: var(--investments); }
+    .accounts-table .cat-badge.stocks      { background: #ede9fe; color: var(--stocks); }
 
     /* Projection controls */
     .projection-controls {
@@ -551,6 +554,7 @@
       crypto:      '#f59e0b',
       bizcash:     '#7c3aed',
       investments: '#0891b2',
+      stocks:      '#8b5cf6',
       math:        '#2563eb',
       other:       '#6b7280',
     };
@@ -606,10 +610,11 @@
         const crypto = sumCategory(row, columns, 'crypto');
         const bizcash = sumCategory(row, columns, 'bizcash');
         const investments = sumCategory(row, columns, 'investments');
+        const stocks = sumCategory(row, columns, 'stocks');
         const debt = sumCategory(row, columns, 'debt');
-        const totalPositive = cash + assets + crypto + bizcash + investments;
+        const totalPositive = cash + assets + crypto + bizcash + investments + stocks;
         const netWorth = totalPositive - Math.abs(debt);
-        return { date, cash, assets, crypto, bizcash, investments, debt: Math.abs(debt), netWorth, raw: row };
+        return { date, cash, assets, crypto, bizcash, investments, stocks, debt: Math.abs(debt), netWorth, raw: row };
       }).filter(r => r.date);
     }
 
@@ -668,6 +673,7 @@
             ${summaryCard('Crypto', latest.crypto, prev.crypto, 'crypto')}
             ${summaryCard('Business Cash', latest.bizcash, prev.bizcash, 'bizcash')}
             ${summaryCard('Investments', latest.investments, prev.investments, 'invest')}
+            ${summaryCard('Stocks/Retirement', latest.stocks, prev.stocks, 'stocks')}
             ${summaryCard('Total Debt', latest.debt, prev.debt, 'debt', true)}
           </div>
 
@@ -882,6 +888,7 @@
             { label: 'Crypto', data: ts.map(r => r.crypto), borderColor: COLORS.crypto, backgroundColor: 'rgba(245,158,11,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Biz Cash', data: ts.map(r => r.bizcash), borderColor: COLORS.bizcash, backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Investments', data: ts.map(r => r.investments), borderColor: COLORS.investments, backgroundColor: 'rgba(8,145,178,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+            { label: 'Stocks/Retirement', data: ts.map(r => r.stocks), borderColor: COLORS.stocks, backgroundColor: 'rgba(139,92,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
             { label: 'Debt', data: ts.map(r => -r.debt), borderColor: COLORS.debt, backgroundColor: 'rgba(220,38,38,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
           ]
         },
@@ -898,6 +905,7 @@
         { label: 'Crypto', value: latest.crypto, color: COLORS.crypto },
         { label: 'Biz Cash', value: latest.bizcash, color: COLORS.bizcash },
         { label: 'Investments', value: latest.investments, color: COLORS.investments },
+        { label: 'Stocks/Retirement', value: latest.stocks, color: COLORS.stocks },
       ].filter(s => s.value > 0);
 
       charts.allocation = new Chart(ctx, {
